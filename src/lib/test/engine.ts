@@ -38,7 +38,8 @@ export class TimeModeEngine {
     };
     
     // Calculate budgeted character count for this duration
-    const budgetChars = Math.ceil(BASE_WPM * 5 * (durationSec / 60) * 1.4);
+    // Make it much more obvious: 15s = ~55 words, 30s = ~110 words, 60s = ~220 words, 120s = ~440 words
+    const budgetChars = Math.ceil(BASE_WPM * 5 * (durationSec / 60) * 0.8); // Reduced multiplier for more obvious differences
     this.words = this.generateBudgetedWords(budgetChars);
   }
 
@@ -149,7 +150,7 @@ export class TimeModeEngine {
     };
     
     // Generate new budgeted words for this duration
-    const budgetChars = Math.ceil(BASE_WPM * 5 * (durationSec / 60) * 1.4);
+    const budgetChars = Math.ceil(BASE_WPM * 5 * (durationSec / 60) * 0.8); // Reduced multiplier for more obvious differences
     this.words = this.generateBudgetedWords(budgetChars);
   }
 }
