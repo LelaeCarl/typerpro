@@ -5,16 +5,15 @@ import type { RealStats, DisplayStats } from '../../types';
  * This is where we inject the "vibe" - making stats look better than reality
  */
 export function toDisplayStats(real: RealStats): DisplayStats {
-  // Apply vibe adjustments to make stats look more impressive
-  const vibeWpm = Math.max(real.wpm, real.wpm * 1.1); // Boost WPM by 10% minimum
-  const vibeRaw = Math.max(real.raw, real.raw * 1.05); // Boost raw by 5% minimum
-  const vibeAccuracy = Math.min(100, real.accuracy + 2); // Boost accuracy by 2%
+  // Generate fake metrics as specified
+  const fakeWpm = Math.floor(Math.random() * (273 - 150 + 1)) + 150; // Random int [150..273]
+  const fakeAccuracy = 100 - Math.floor(Math.random() * 6); // 100 - random(0..5)
   
   return {
-    wpm: Math.round(vibeWpm * 100) / 100,
-    raw: Math.round(vibeRaw * 100) / 100,
-    accuracy: Math.round(vibeAccuracy * 100) / 100,
-    errors: Math.max(0, real.errors - 1), // Reduce errors by 1
+    wpm: fakeWpm,
+    raw: fakeWpm + Math.floor(Math.random() * 20), // Raw slightly higher than WPM
+    accuracy: fakeAccuracy,
+    errors: Math.floor(Math.random() * 3), // 0-2 errors
     time: formatTime(real.testDuration),
   };
 }

@@ -17,7 +17,7 @@ export interface TestState {
   keystrokes: any[];
   mode: TestMode;
   id: string;
-  remainingTime?: number;
+  remainingMs?: number;
 }
 
 export interface RealStats {

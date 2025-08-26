@@ -22,10 +22,18 @@ export function TestSurface() {
     );
   }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.ceil(ms / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getProgressPercentage = () => {
+    if (!current.remainingMs || mode !== 'time') return 0;
+    const configStore = useConfigStore.getState();
+    const totalMs = configStore.durationSec * 1000;
+    return Math.max(0, Math.min(100, ((totalMs - current.remainingMs) / totalMs) * 100));
   };
 
   return (
@@ -37,11 +45,18 @@ export function TestSurface() {
         </div>
 
         {/* Timer for time mode */}
-        {mode === 'time' && current.remainingTime !== undefined && (
+        {mode === 'time' && current.remainingMs !== undefined && current.status === 'running' && (
           <div className="text-center mb-4">
-            <span className="text-accent text-lg font-mono">
-              {formatTime(current.remainingTime)}
-            </span>
+            <div className="text-accent text-lg font-mono mb-2">
+              {formatTime(current.remainingMs)}
+            </div>
+            {/* Progress bar */}
+            <div className="w-48 mx-auto h-1 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-accent transition-all duration-100 ease-out"
+                style={{ width: `${getProgressPercentage()}%` }}
+              />
+            </div>
           </div>
         )}
 

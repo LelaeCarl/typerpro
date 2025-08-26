@@ -5,39 +5,51 @@ const BASE_WPM = 220;
 
 export interface TimeModeState {
   deadline: number;
-  remainingTime: number;
+  remainingMs: number;
   isRunning: boolean;
   tickInterval?: NodeJS.Timeout;
 }
 
-export interface WordBuffer {
-  words: WordToken[];
-  startIndex: number; // Virtual index for the first word in buffer
-  bufferSize: number;
-}
-
 export class TimeModeEngine {
   private state: TimeModeState;
-  private buffer: WordBuffer;
-  private onTimeUpdate?: (remainingTime: number) => void;
+  private words: WordToken[];
+  private onTimeUpdate?: (remainingMs: number) => void;
   private onFinish?: () => void;
 
   constructor(durationSec: number) {
     this.state = {
-      deadline: performance.now() + durationSec * 1000,
-      remainingTime: durationSec,
+      deadline: 0,
+      remainingMs: durationSec * 1000,
       isRunning: false,
     };
     
-    const bufferSize = Math.min(160, Math.max(80, Math.ceil((BASE_WPM * durationSec) / 60 * 1.5)));
-    this.buffer = {
-      words: generateWordTokens(bufferSize),
-      startIndex: 0,
-      bufferSize,
-    };
+    // Calculate budgeted character count for this duration
+    const budgetChars = Math.ceil(BASE_WPM * 5 * (durationSec / 60) * 1.4);
+    this.words = this.generateBudgetedWords(budgetChars);
   }
 
-  start(onTimeUpdate?: (remainingTime: number) => void, onFinish?: () => void) {
+  private generateBudgetedWords(targetChars: number): WordToken[] {
+    const words: WordToken[] = [];
+    let currentChars = 0;
+    
+    // Generate words until we reach the target character count
+    while (currentChars < targetChars) {
+      const newWords = generateWordTokens(50); // Get 50 words at a time
+      
+      for (const word of newWords) {
+        const wordLength = word.target.length + 1; // +1 for space
+        if (currentChars + wordLength > targetChars) {
+          break;
+        }
+        words.push(word);
+        currentChars += wordLength;
+      }
+    }
+    
+    return words;
+  }
+
+  start(onTimeUpdate?: (remainingMs: number) => void, onFinish?: () => void) {
     this.onTimeUpdate = onTimeUpdate;
     this.onFinish = onFinish;
     this.state.isRunning = true;
@@ -57,8 +69,8 @@ export class TimeModeEngine {
       if (!this.state.isRunning) return;
 
       const now = performance.now();
-      const remaining = Math.max(0, (this.state.deadline - now) / 1000);
-      this.state.remainingTime = remaining;
+      const remaining = Math.max(0, this.state.deadline - now);
+      this.state.remainingMs = remaining;
 
       if (this.onTimeUpdate) {
         this.onTimeUpdate(remaining);
@@ -73,63 +85,38 @@ export class TimeModeEngine {
     }, 50);
   }
 
-  getRemainingTime(): number {
-    return this.state.remainingTime;
+  setDeadline(startedAt: number, durationSec: number) {
+    this.state.deadline = startedAt + (durationSec * 1000);
+  }
+
+  getRemainingMs(): number {
+    return this.state.remainingMs;
   }
 
   getWords(): WordToken[] {
-    return this.buffer.words;
-  }
-
-  getVirtualIndex(realIndex: number): number {
-    return realIndex - this.buffer.startIndex;
-  }
-
-  getRealIndex(virtualIndex: number): number {
-    return virtualIndex + this.buffer.startIndex;
+    return this.words;
   }
 
   // Extend buffer when cursor approaches the end
   extendBufferIfNeeded(cursorWordIndex: number) {
-    const virtualIndex = this.getVirtualIndex(cursorWordIndex);
-    
-    if (virtualIndex > this.buffer.words.length - 40) {
+    if (cursorWordIndex > this.words.length - 40) {
       // Add 80 new words to the end
       const newWords = generateWordTokens(80);
-      this.buffer.words.push(...newWords);
-      
-      // Remove words from the beginning to maintain buffer size
-      const toRemove = Math.min(40, this.buffer.words.length - this.buffer.bufferSize);
-      if (toRemove > 0) {
-        this.buffer.words.splice(0, toRemove);
-        this.buffer.startIndex += toRemove;
-      }
+      this.words.push(...newWords);
     }
-  }
-
-  // Get visible words for rendering (3 lines worth)
-  getVisibleWords(cursorWordIndex: number, wordsPerLine: number = 8): WordToken[] {
-    const virtualIndex = this.getVirtualIndex(cursorWordIndex);
-    const start = Math.max(0, virtualIndex - wordsPerLine);
-    const end = Math.min(this.buffer.words.length, virtualIndex + wordsPerLine * 2);
-    
-    return this.buffer.words.slice(start, end);
   }
 
   reset(durationSec: number) {
     this.stop();
     
     this.state = {
-      deadline: performance.now() + durationSec * 1000,
-      remainingTime: durationSec,
+      deadline: 0,
+      remainingMs: durationSec * 1000,
       isRunning: false,
     };
     
-    const bufferSize = Math.min(160, Math.max(80, Math.ceil((BASE_WPM * durationSec) / 60 * 1.5)));
-    this.buffer = {
-      words: generateWordTokens(bufferSize),
-      startIndex: 0,
-      bufferSize,
-    };
+    // Generate new budgeted words for this duration
+    const budgetChars = Math.ceil(BASE_WPM * 5 * (durationSec / 60) * 1.4);
+    this.words = this.generateBudgetedWords(budgetChars);
   }
 }

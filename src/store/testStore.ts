@@ -20,7 +20,7 @@ interface TestSlice {
     keystrokes: any[];
     mode: TestMode;
     id: string;
-    remainingTime?: number;
+    remainingMs?: number;
     timeEngine?: TimeModeEngine | null;
   };
   actions: {
@@ -47,27 +47,31 @@ export const useTestStore = create<TestSlice>((set, get) => ({
     mode: 'time',
     id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     timeEngine: defaultTimeEngine,
-    remainingTime: defaultDuration,
+    remainingMs: defaultDuration * 1000,
   },
   actions: {
     startIfIdle() {
       const s = get().current;
       if (s.status === 'idle') {
+        const startedAt = performance.now();
+        
         set(state => {
           const newState = {
             current: {
               ...state.current,
               status: 'running' as const,
-              startedAt: performance.now(),
+              startedAt,
             }
           };
 
-          // Start time engine if in time mode
+          // Set deadline and start time engine if in time mode
           if (state.current.mode === 'time' && state.current.timeEngine) {
+            const configStore = useConfigStore.getState();
+            state.current.timeEngine.setDeadline(startedAt, configStore.durationSec);
             state.current.timeEngine.start(
-              (remainingTime) => {
+              (remainingMs) => {
                 set(s => ({
-                  current: { ...s.current, remainingTime }
+                  current: { ...s.current, remainingMs }
                 }));
               },
               () => {
@@ -238,7 +242,7 @@ export const useTestStore = create<TestSlice>((set, get) => ({
           mode: 'time',
           target: timeEngine.getWords(),
           timeEngine,
-          remainingTime: durationSec,
+          remainingMs: durationSec * 1000,
           status: 'idle',
           cursor: { wordIndex: 0, letterIndex: 0 },
           startedAt: undefined,
@@ -270,7 +274,7 @@ export const useTestStore = create<TestSlice>((set, get) => ({
             displayStats: undefined,
             keystrokes: [],
             id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            remainingTime: undefined,
+            remainingMs: undefined,
             timeEngine: null,
           }
         };
@@ -283,7 +287,7 @@ export const useTestStore = create<TestSlice>((set, get) => ({
             ...newState.current,
             timeEngine: timeEngine as any,
             target: timeEngine.getWords(),
-            remainingTime: configStore.durationSec as any,
+            remainingMs: configStore.durationSec * 1000 as any,
           };
         }
 
