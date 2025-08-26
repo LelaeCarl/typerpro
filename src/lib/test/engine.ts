@@ -1,7 +1,21 @@
 import type { WordToken } from '../../types';
-import { generateWordTokens } from './words';
 
 const BASE_WPM = 220;
+
+// Default English word list (200 common words)
+const DEFAULT_WORDS = [
+  'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
+  'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what',
+  'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just', 'him', 'know', 'take',
+  'people', 'into', 'year', 'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than', 'then', 'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also',
+  'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us',
+  'time', 'person', 'year', 'way', 'day', 'thing', 'man', 'world', 'life', 'hand', 'part', 'child', 'eye', 'woman', 'place', 'work', 'week', 'case', 'point', 'government',
+  'company', 'number', 'group', 'problem', 'fact', 'water', 'month', 'lot', 'right', 'study', 'book', 'eye', 'job', 'word', 'business', 'issue', 'side', 'kind', 'head', 'house',
+  'service', 'friend', 'father', 'mind', 'month', 'lot', 'right', 'study', 'book', 'eye', 'job', 'word', 'business', 'issue', 'side', 'kind', 'head', 'house', 'service', 'friend',
+  'father', 'mind', 'month', 'lot', 'right', 'study', 'book', 'eye', 'job', 'word', 'business', 'issue', 'side', 'kind', 'head', 'house', 'service', 'friend', 'father', 'mind',
+  'month', 'lot', 'right', 'study', 'book', 'eye', 'job', 'word', 'business', 'issue', 'side', 'kind', 'head', 'house', 'service', 'friend', 'father', 'mind', 'month', 'lot',
+  'right', 'study', 'book', 'eye', 'job', 'word', 'business', 'issue', 'side', 'kind', 'head', 'house', 'service', 'friend', 'father', 'mind', 'month', 'lot', 'right', 'study'
+];
 
 export interface TimeModeState {
   deadline: number;
@@ -34,19 +48,33 @@ export class TimeModeEngine {
     
     // Generate words until we reach the target character count
     while (currentChars < targetChars) {
-      const newWords = generateWordTokens(50); // Get 50 words at a time
+      // Get random words from the word list
+      const randomWords = this.getRandomWords(50);
       
-      for (const word of newWords) {
-        const wordLength = word.target.length + 1; // +1 for space
+      for (const word of randomWords) {
+        const wordLength = word.length + 1; // +1 for space
         if (currentChars + wordLength > targetChars) {
           break;
         }
-        words.push(word);
+        words.push({
+          target: word,
+          letters: new Array(word.length).fill('pending'),
+          typed: ''
+        });
         currentChars += wordLength;
       }
     }
     
     return words;
+  }
+
+  private getRandomWords(count: number): string[] {
+    const result: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const randomIndex = Math.floor(Math.random() * DEFAULT_WORDS.length);
+      result.push(DEFAULT_WORDS[randomIndex]);
+    }
+    return result;
   }
 
   start(onTimeUpdate?: (remainingMs: number) => void, onFinish?: () => void) {
@@ -101,7 +129,12 @@ export class TimeModeEngine {
   extendBufferIfNeeded(cursorWordIndex: number) {
     if (cursorWordIndex > this.words.length - 40) {
       // Add 80 new words to the end
-      const newWords = generateWordTokens(80);
+      const newRandomWords = this.getRandomWords(80);
+      const newWords = newRandomWords.map(word => ({
+        target: word,
+        letters: new Array(word.length).fill('pending'),
+        typed: ''
+      }));
       this.words.push(...newWords);
     }
   }
