@@ -1,133 +1,202 @@
-# TyperPro
+# TyperPro - Vibe Mode (Arcade) 🎯
 
-A Monkeytype-style typing test application with **Vibe Mode (Arcade)** - featuring fake yet consistent metrics for a fun, arcade-like experience.
+A Monkeytype-style typing application with **vibe-coded metrics** - where the displayed statistics are consistently fake yet engaging, creating an arcade-like experience.
 
-## Features
+**🌐 Live Demo**: [https://lelaecarl.github.io/typerpro/](https://lelaecarl.github.io/typerpro/)
 
-- **Minimalist typing interface** with smooth caret and unobtrusive HUD
-- **Real-time character highlighting**: correct letters brighten, incorrect letters are red + underlined, extra keystrokes render as faint red glyphs
-- **Vibe Mode**: All metrics are fake but consistent - WPM ranges from 150-273, accuracy from 95-100%
-- **Multiple test modes**: words, time (15/30/60/120s), quote, zen
-- **Command palette**: Quick access to settings and commands via Esc or Ctrl/Cmd+Shift+P
-- **Keybinds**: Tab+Enter to restart, Esc for command palette
-- **Results screen**: Beautiful graph with fake WPM data and comprehensive statistics
+## ✨ Features
+
+### 🎮 Core Experience
+- **Monkeytype-style UX** with smooth animations and transitions
+- **Time-gated mode** with streaming word buffers (not list-gated)
+- **Mobile-first design** with soft keyboard support
+- **Vibe metrics** - WPM 150-273, Accuracy 95-100% (always impressive!)
+
+### 📱 Mobile Support
+- **iOS Safari & Android Chrome** optimized
+- **Soft keyboard integration** with proper input handling
+- **Touch-friendly interface** with 44px+ touch targets
+- **Safe area handling** for notched devices
+- **Responsive design** that works on all screen sizes
+
+### 🎨 Visual Design
 - **Serika-inspired dark theme** with yellow accents
+- **Smooth animations** using Framer Motion
+- **Proper color contrast** for accessibility
+- **Reduced motion support** for users with motion sensitivity
 
-## Tech Stack
+### ⌨️ Typing Engine
+- **Hidden input architecture** for precise keystroke capture
+- **IME composition support** for international keyboards
+- **Real-time character highlighting** (correct/wrong/extra)
+- **Space advances words** without DOM insertion
+- **Backspace works** within and across word boundaries
+
+### ⚡ Performance
+- **Streaming word buffers** for infinite typing
+- **50ms timer ticks** for precise time tracking
+- **Efficient rendering** with virtual word indexing
+- **Memory management** with buffer cleanup
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/LelaeCarl/typerpro.git
+cd typerpro
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+### Available Scripts
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm test             # Run unit tests
+npm run test:e2e     # Run end-to-end tests
+```
+
+## 🎯 How It Works
+
+### Vibe Mode (Arcade)
+TyperPro uses **fake metrics** to create an engaging arcade experience:
+
+- **Real stats are calculated** internally for development
+- **Display stats are overridden** at test completion
+- **WPM: 150-273** (always impressive!)
+- **Accuracy: 95-100%** (consistently high)
+- **Results use only fake metrics** - never the real ones
+
+### Time Mode Engine
+- **Deadline-based completion** (not word list completion)
+- **Streaming buffers** with 80-160 words
+- **Auto-extension** when approaching buffer end
+- **Virtual indexing** for smooth performance
+
+### Mobile Input System
+- **Tiny visible input** (1x1px) to summon soft keyboard
+- **beforeinput/input events** for character capture
+- **Auto-refocus** when input blurs
+- **Tap anywhere** to start typing
+
+## 🛠️ Technical Stack
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS with custom design tokens
 - **State Management**: Zustand
+- **Animations**: Framer Motion
 - **Charts**: Recharts
-- **Testing**: Vitest + React Testing Library + Playwright E2E
-- **Routing**: React Router
+- **Testing**: Vitest + React Testing Library + Playwright
+- **Deployment**: GitHub Pages + GitHub Actions
 
-## Quick Start
-
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Start development server**:
-   ```bash
-   npm run dev
-   ```
-
-3. **Open your browser** and navigate to `http://localhost:5173`
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run test` - Run unit tests
-- `npm run test:ui` - Run tests with UI
-- `npm run test:e2e` - Run E2E tests with Playwright
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
 ├── components/          # React components
-│   ├── CommandPalette.tsx
-│   ├── HudFooter.tsx
-│   ├── KeyboardHandler.tsx
-│   ├── Navbar.tsx
-│   ├── ResultsGraph.tsx
-│   ├── TestSurface.tsx
-│   └── TopToolbar.tsx
-├── lib/                 # Core logic
-│   ├── test/           # Test utilities
+│   ├── Chip.tsx        # Interactive mode/duration chips
+│   ├── CommandPalette.tsx # Command overlay
+│   ├── HudFooter.tsx   # Bottom navigation
+│   ├── Letter.tsx      # Individual letter rendering
+│   ├── Navbar.tsx      # Top navigation
+│   ├── ResultsGraph.tsx # WPM/accuracy charts
+│   ├── TestSurface.tsx # Main typing area
+│   └── TopToolbar.tsx  # Mode/duration selection
+├── lib/
+│   ├── test/           # Core typing logic
+│   │   ├── engine.ts   # Time mode engine
 │   │   ├── stats.ts    # Real statistics calculation
 │   │   └── words.ts    # Word generation
-│   └── vibe/           # Vibe mode (fake metrics)
-│       ├── generators.ts
-│       └── interceptor.ts
-├── pages/              # Page components
-│   ├── ResultsPage.tsx
-│   └── TestPage.tsx
-├── store/              # Zustand store
-│   └── index.ts
-├── test/               # Test setup
-├── types/              # TypeScript types
-└── App.tsx             # Main app component
+│   └── vibe/           # Fake metrics system
+│       ├── generators.ts # Vibe metric generators
+│       └── interceptor.ts # Display stats override
+├── pages/              # Route components
+│   ├── TestPage.tsx    # Main typing test
+│   └── ResultsPage.tsx # Results display
+├── store/              # State management
+│   ├── configStore.ts  # App configuration
+│   ├── testStore.ts    # Test state and actions
+│   └── index.ts        # Main app store
+└── types/              # TypeScript definitions
 ```
 
-## Vibe Mode (Arcade)
+## 🎮 Usage
 
-TyperPro operates in "Vibe Mode" where all displayed metrics are fake but consistent:
+### Desktop
+- **Type** to start the test
+- **Tab + Enter** to restart
+- **Esc** or **Ctrl/Cmd + Shift + P** for command palette
+- **Space** advances to next word
 
-- **WPM**: Random integer between 150-273
-- **Accuracy**: Random value between 95-100%
-- **Raw WPM**: Slightly varied from main WPM
-- **Consistency**: Random value between 60-95%
-- **Graph data**: Smooth curves generated around fake WPM values
+### Mobile
+- **Tap anywhere** in the test area to summon keyboard
+- **Type normally** - the app handles input automatically
+- **Swipe** to access command palette
+- **Tap chips** to change mode/duration
 
-Real statistics are calculated internally for development purposes but are never displayed to users. The vibe interceptor (`src/lib/vibe/interceptor.ts`) ensures the UI only sees fake metrics.
+### Modes
+- **Words**: Complete a set number of words
+- **Time**: Type for a specific duration (15s/30s/60s/120s)
+- **Quote**: Type a specific quote (coming soon)
+- **Zen**: Unlimited typing (coming soon)
 
-## Keybinds
+## 🧪 Testing
 
-- **Tab + Enter**: Restart test
-- **Esc**: Open command palette
-- **Ctrl/Cmd + Shift + P**: Open command palette
-- **Ctrl + Enter**: Finish test early
-
-## Testing
-
-The application includes comprehensive testing:
-
-- **Unit tests** for vibe generators and interceptors
-- **E2E tests** for typing flow, keybinds, and results display
-- **Accessibility tests** for keyboard navigation and screen readers
-
-Run tests with:
+### Unit Tests
 ```bash
-npm run test        # Unit tests
-npm run test:e2e    # E2E tests
+npm test
 ```
 
-## Design System
+### End-to-End Tests
+```bash
+npm run test:e2e
+```
 
-The application uses a custom design system based on the Serika dark theme:
+Tests cover:
+- Typing flow and character highlighting
+- Space/backspace functionality
+- Mode switching and duration selection
+- Mobile input handling
+- Vibe metrics validation
 
-- **Colors**: Dark charcoal background (#2c2e31) with yellow accents (#5a5951)
-- **Typography**: Monospace font for test surface, sans-serif for UI
-- **Spacing**: Consistent 4px grid system
-- **Components**: Reusable design tokens for consistent styling
+## 🚀 Deployment
 
-## Contributing
+The app is automatically deployed to GitHub Pages via GitHub Actions:
+
+1. **Push to main branch** triggers deployment
+2. **GitHub Actions** builds the app
+3. **Deploys to gh-pages branch**
+4. **Available at**: https://lelaecarl.github.io/typerpro/
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+## 📄 License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Monkeytype** for the UX inspiration
+- **Serika theme** for the color palette
+- **Framer Motion** for smooth animations
+- **Tailwind CSS** for utility-first styling
 
 ---
 
-**Note**: This is a fun, arcade-style typing test. All metrics are intentionally fake for entertainment purposes. For serious typing practice, consider using Monkeytype or other professional typing test applications.
+**🎯 Remember**: This is **Vibe Mode (Arcade)** - the metrics are intentionally fake for an engaging experience! The real performance is calculated internally but never displayed to users.
