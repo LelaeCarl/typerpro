@@ -1,198 +1,300 @@
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
-import type { TestState, TestMode, Settings } from '../types';
+import type { TestState } from '../types';
 import { generateWordTokens } from '../lib/test/words';
 import { calcRealStats } from '../lib/test/stats';
 import { toDisplayStats } from '../lib/vibe/interceptor';
+import { TimeModeEngine } from '../lib/test/engine';
 
-interface AppState {
-  // Test state
-  currentTest: TestState | null;
-  testHistory: TestState[];
-  
-  // Settings
-  settings: Settings;
-  
-  // UI state
-  commandPaletteOpen: boolean;
-  
-  // Actions
-  startNewTest: (mode: TestMode, wordCount?: number) => void;
-  processKeystroke: (key: string, code: string, timestamp: number) => void;
-  finishTest: () => void;
-  restartTest: () => void;
-  
-  // Settings actions
-  updateSettings: (settings: Partial<Settings>) => void;
-  
-  // UI actions
-  toggleCommandPalette: () => void;
-  closeCommandPalette: () => void;
+interface TestSlice {
+  current: TestState & {
+    realStats?: any;
+    displayStats?: any;
+    remainingTime?: number;
+    timeEngine?: TimeModeEngine | null;
+  };
+  actions: {
+    startIfIdle(): void;
+    typeChar(ch: string): void;
+    commitSpace(): void;
+    backspace(): void;
+    resetAndRebuild(): void;
+    finishTest(): void;
+    initTimeMode(durationSec: number): void;
+  };
 }
 
-const defaultSettings: Settings = {
-  theme: 'dark',
-  fontSize: 32,
-  caretStyle: 'block',
-  pauseOnBlur: false,
-};
+export const useTestStore = create<TestSlice>((set, get) => ({
+  current: {
+    status: 'idle',
+    target: generateWordTokens(200),
+    cursor: { wordIndex: 0, letterIndex: 0 },
+    keystrokes: [],
+    mode: 'time',
+    id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    timeEngine: null,
+  },
+  actions: {
+    startIfIdle() {
+      const s = get().current;
+      if (s.status === 'idle') {
+        set(state => {
+          const newState = {
+            current: {
+              ...state.current,
+              status: 'running' as const,
+              startedAt: performance.now(),
+            }
+          };
 
-export const useAppStore = create<AppState>()(
-  subscribeWithSelector((set, get) => ({
-    currentTest: null,
-    testHistory: [],
-    settings: defaultSettings,
-    commandPaletteOpen: false,
+          // Start time engine if in time mode
+          if (state.current.mode === 'time' && state.current.timeEngine) {
+            state.current.timeEngine.start(
+              (remainingTime) => {
+                set(s => ({
+                  current: { ...s.current, remainingTime }
+                }));
+              },
+              () => {
+                get().actions.finishTest();
+              }
+            );
+          }
 
-    startNewTest: (mode: TestMode, wordCount: number = 200) => {
-      const testId = `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      const newTest: TestState = {
-        id: testId,
-        mode,
-        status: 'idle',
-        target: generateWordTokens(wordCount),
-        cursor: { wordIndex: 0, letterIndex: 0 },
-        keystrokes: [],
-      };
-
-      set({ currentTest: newTest });
+          return newState;
+        });
+      }
     },
 
-    processKeystroke: (key: string, code: string, timestamp: number) => {
-      const { currentTest } = get();
-      if (!currentTest || currentTest.status === 'done') return;
+    typeChar(ch: string) {
+      set(state => {
+        const { target, cursor, mode, timeEngine } = state.current;
+        const w = target[cursor.wordIndex];
+        if (!w) return state;
 
-      const keystroke = {
-        t: timestamp,
-        key,
-        code,
-        kind: 'input' as const,
-      };
+        // Extend buffer if needed in time mode
+        if (mode === 'time' && timeEngine) {
+          timeEngine.extendBufferIfNeeded(cursor.wordIndex);
+        }
 
-      // Start test on first keystroke
-      if (currentTest.status === 'idle') {
-        set(state => ({
-          currentTest: state.currentTest ? {
-            ...state.currentTest,
-            status: 'running',
-            startedAt: timestamp,
-            keystrokes: [keystroke],
-          } : null,
-        }));
-        return;
-      }
-
-      // Process the keystroke
-      const updatedTest = { ...currentTest };
-      updatedTest.keystrokes.push(keystroke);
-
-      const { wordIndex, letterIndex } = updatedTest.cursor;
-      const currentWord = updatedTest.target[wordIndex];
-
-      if (!currentWord) {
-        // Test finished - all words completed
-        updatedTest.status = 'done';
-        updatedTest.endedAt = timestamp;
+        const newTarget = [...target];
+        const newWord = { ...w };
         
-        // Calculate real stats (dev only)
-        const realStats = calcRealStats(updatedTest);
-        
-        // Apply vibe interceptor
-        const displayStats = toDisplayStats(realStats);
-        
-        updatedTest.realStats = realStats;
-        updatedTest.displayStats = displayStats;
-
-        set(state => ({
-          currentTest: updatedTest,
-          testHistory: [...state.testHistory, updatedTest],
-        }));
-        return;
-      }
-
-      // Handle character input
-      if (key.length === 1) {
-        if (letterIndex < currentWord.target.length) {
-          // Typing within the word
-          const isCorrect = key === currentWord.target[letterIndex];
-          currentWord.letters[letterIndex] = isCorrect ? 'correct' : 'wrong';
-          currentWord.typed += key;
+        if (cursor.letterIndex < newWord.target.length) {
+          const expected = newWord.target[cursor.letterIndex];
+          if (ch === expected) {
+            newWord.letters[cursor.letterIndex] = 'correct';
+          } else {
+            newWord.letters[cursor.letterIndex] = 'wrong';
+          }
+          newWord.typed += ch;
+          newTarget[cursor.wordIndex] = newWord;
           
-          updatedTest.cursor.letterIndex++;
+          return {
+            current: {
+              ...state.current,
+              target: newTarget,
+              cursor: { ...cursor, letterIndex: cursor.letterIndex + 1 }
+            }
+          };
         } else {
-          // Extra character beyond word length
-          currentWord.typed += key;
-          // Add extra character state
-          currentWord.letters.push('extra');
+          // extra character
+          newWord.typed += ch;
+          newWord.letters.push('extra');
+          newTarget[cursor.wordIndex] = newWord;
+          
+          return {
+            current: {
+              ...state.current,
+              target: newTarget,
+              cursor: { ...cursor, letterIndex: cursor.letterIndex + 1 }
+            }
+          };
         }
-      } else if (key === 'Backspace') {
-        // Handle backspace
-        if (letterIndex > 0) {
-          updatedTest.cursor.letterIndex--;
-          currentWord.typed = currentWord.typed.slice(0, -1);
-          currentWord.letters[letterIndex - 1] = 'pending';
-        } else if (wordIndex > 0) {
-          // Move to previous word
-          updatedTest.cursor.wordIndex--;
-          const prevWord = updatedTest.target[wordIndex - 1];
-          updatedTest.cursor.letterIndex = prevWord.typed.length;
+      });
+    },
+
+    commitSpace() {
+      set(state => {
+        const { target, cursor, mode } = state.current;
+        
+        // In time mode, don't end on word completion
+        if (mode === 'time') {
+          // move to next word, reset letter index
+          return {
+            current: {
+              ...state.current,
+              cursor: { wordIndex: cursor.wordIndex + 1, letterIndex: 0 }
+            }
+          };
         }
-      } else if (key === ' ' || key === 'Space') {
-        // Move to next word
-        if (letterIndex >= currentWord.target.length) {
-          updatedTest.cursor.wordIndex++;
-          updatedTest.cursor.letterIndex = 0;
+        
+        // For other modes, just advance to next word
+        const atLastWord = cursor.wordIndex >= target.length - 1;
+        
+        if (!atLastWord) {
+          // move to next word, reset letter index
+          return {
+            current: {
+              ...state.current,
+              cursor: { wordIndex: cursor.wordIndex + 1, letterIndex: 0 }
+            }
+          };
+        } else {
+          // last word done → end test
+          const testState: TestState = {
+            ...state.current,
+            endedAt: performance.now(),
+          };
+          const realStats = calcRealStats(testState);
+          const displayStats = toDisplayStats(realStats);
+          
+          return {
+            current: {
+              ...state.current,
+              status: 'done',
+              endedAt: performance.now(),
+              realStats,
+              displayStats
+            }
+          };
         }
+      });
+    },
+
+    backspace() {
+      set(state => {
+        const { target, cursor } = state.current;
+        const w = target[cursor.wordIndex];
+        if (!w) return state;
+
+        const newTarget = [...target];
+        const newWord = { ...w };
+
+        if (cursor.letterIndex > 0) {
+          // delete within word
+          const newLetterIndex = cursor.letterIndex - 1;
+          newWord.typed = newWord.typed.slice(0, -1);
+          newWord.letters[newLetterIndex] = 'pending';
+          // also remove trailing 'extra' state if beyond target length
+          if (newLetterIndex >= newWord.target.length) {
+            newWord.letters.pop();
+          }
+          newTarget[cursor.wordIndex] = newWord;
+          
+          return {
+            current: {
+              ...state.current,
+              target: newTarget,
+              cursor: { ...cursor, letterIndex: newLetterIndex }
+            }
+          };
+        } else if (cursor.wordIndex > 0) {
+          // borrow from previous word end
+          const newWordIndex = cursor.wordIndex - 1;
+          const prevWord = target[newWordIndex];
+          const newLetterIndex = Math.max(0, prevWord.typed.length);
+          
+          if (prevWord.typed.length > 0) {
+            const newPrevWord = { ...prevWord };
+            newPrevWord.typed = newPrevWord.typed.slice(0, -1);
+            newPrevWord.letters[newLetterIndex - 1] = 'pending';
+            newTarget[newWordIndex] = newPrevWord;
+          }
+          
+          return {
+            current: {
+              ...state.current,
+              target: newTarget,
+              cursor: { wordIndex: newWordIndex, letterIndex: newLetterIndex }
+            }
+          };
+        }
+        
+        return state;
+      });
+    },
+
+    initTimeMode(durationSec: number) {
+      const timeEngine = new TimeModeEngine(durationSec);
+      set(state => ({
+        current: {
+          ...state.current,
+          mode: 'time',
+          target: timeEngine.getWords(),
+          timeEngine,
+          remainingTime: durationSec,
+        }
+      }));
+    },
+
+    resetAndRebuild() {
+      set(state => {
+        // Stop time engine if running
+        if (state.current.timeEngine) {
+          state.current.timeEngine.stop();
+        }
+
+        const newState = {
+          current: {
+            ...state.current,
+            status: 'idle' as const,
+            target: generateWordTokens(200),
+            cursor: { wordIndex: 0, letterIndex: 0 },
+            startedAt: undefined,
+            endedAt: undefined,
+            realStats: undefined,
+            displayStats: undefined,
+            keystrokes: [],
+            id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            remainingTime: undefined,
+            timeEngine: null,
+          }
+        };
+
+        // Re-initialize time mode if needed
+        if (state.current.mode === 'time') {
+          const configStore = useConfigStore.getState();
+          const timeEngine = new TimeModeEngine(configStore.durationSec);
+          newState.current = {
+            ...newState.current,
+            timeEngine: timeEngine as any,
+            target: timeEngine.getWords(),
+            remainingTime: configStore.durationSec as any,
+          };
+        }
+
+        return newState;
+      });
+    },
+
+    finishTest() {
+      const current = get().current;
+      if (current.status !== 'running') return;
+
+      // Stop time engine if running
+      if (current.timeEngine) {
+        current.timeEngine.stop();
       }
 
-      set({ currentTest: updatedTest });
-    },
-
-    finishTest: () => {
-      const { currentTest } = get();
-      if (!currentTest || currentTest.status !== 'running') return;
-
-      const updatedTest = { ...currentTest };
-      updatedTest.status = 'done';
-      updatedTest.endedAt = Date.now();
-
-      // Calculate real stats (dev only)
-      const realStats = calcRealStats(updatedTest);
-      
-      // Apply vibe interceptor
+      const testState: TestState = {
+        ...current,
+        endedAt: performance.now(),
+      };
+      const realStats = calcRealStats(testState);
       const displayStats = toDisplayStats(realStats);
-      
-      updatedTest.realStats = realStats;
-      updatedTest.displayStats = displayStats;
 
       set(state => ({
-        currentTest: updatedTest,
-        testHistory: [...state.testHistory, updatedTest],
+        current: {
+          ...state.current,
+          status: 'done',
+          endedAt: performance.now(),
+          realStats,
+          displayStats
+        }
       }));
     },
+  },
+}));
 
-    restartTest: () => {
-      const { currentTest } = get();
-      if (!currentTest) return;
-
-      get().startNewTest(currentTest.mode);
-    },
-
-    updateSettings: (newSettings: Partial<Settings>) => {
-      set(state => ({
-        settings: { ...state.settings, ...newSettings },
-      }));
-    },
-
-    toggleCommandPalette: () => {
-      set(state => ({
-        commandPaletteOpen: !state.commandPaletteOpen,
-      }));
-    },
-
-    closeCommandPalette: () => {
-      set({ commandPaletteOpen: false });
-    },
-  }))
-);
+// Import config store
+import { useConfigStore } from './configStore';

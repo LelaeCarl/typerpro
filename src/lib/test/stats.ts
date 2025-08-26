@@ -1,66 +1,76 @@
 import type { TestState, RealStats } from '../../types';
 
-/**
- * Calculate real statistics from test data
- * This is used internally for development but never displayed to users
- */
-export const calcRealStats = (testState: TestState): RealStats => {
-  if (!testState.startedAt || !testState.endedAt) {
-    throw new Error('Test must be completed to calculate stats');
-  }
-
-  const durationSec = (testState.endedAt - testState.startedAt) / 1000;
-  const keystrokes = testState.keystrokes.filter(k => k.kind === 'input');
+export function calcRealStats(testState: TestState): RealStats {
+  const { target, startedAt, endedAt } = testState;
   
-  if (keystrokes.length === 0) {
+  if (!startedAt || !endedAt) {
     return {
       wpm: 0,
-      rawWpm: 0,
-      accuracy: 100,
-      durationSec,
-      testMode: testState.mode
+      raw: 0,
+      accuracy: 0,
+      errors: 0,
+      testDuration: 0,
+      characters: {
+        correct: 0,
+        incorrect: 0,
+        extra: 0,
+        total: 0,
+      },
     };
   }
 
-  // Calculate total characters typed
-  const totalChars = keystrokes.length;
-  
-  // Calculate correct characters
+  const testDuration = (endedAt - startedAt) / 1000; // seconds
+  const minutes = testDuration / 60;
+
   let correctChars = 0;
-  let totalTargetChars = 0;
-  
-  for (const word of testState.target) {
-    totalTargetChars += word.target.length;
-    for (let i = 0; i < Math.min(word.typed.length, word.target.length); i++) {
-      if (word.typed[i] === word.target[i]) {
+  let incorrectChars = 0;
+  let extraChars = 0;
+  let totalChars = 0;
+
+  target.forEach(word => {
+    const targetLength = word.target.length;
+    const typedLength = word.typed.length;
+    
+    // Count correct/incorrect characters
+    for (let i = 0; i < Math.min(targetLength, typedLength); i++) {
+      if (word.letters[i] === 'correct') {
         correctChars++;
+      } else if (word.letters[i] === 'wrong') {
+        incorrectChars++;
       }
     }
-  }
+    
+    // Count extra characters
+    for (let i = targetLength; i < typedLength; i++) {
+      if (word.letters[i] === 'extra') {
+        extraChars++;
+      }
+    }
+    
+    totalChars += typedLength;
+  });
 
-  // Calculate WPM (words per minute)
-  // Standard: 5 characters = 1 word
-  const wordsTyped = totalChars / 5;
-  const wpm = (wordsTyped / durationSec) * 60;
+  const totalErrors = incorrectChars + extraChars;
+  const accuracy = totalChars > 0 ? ((correctChars / totalChars) * 100) : 0;
   
-  // Calculate raw WPM (no error correction)
-  const rawWpm = wpm;
-  
-  // Calculate accuracy
-  const accuracy = totalTargetChars > 0 ? (correctChars / totalTargetChars) * 100 : 100;
-  
-  // Calculate consistency (simplified)
-  const consistency = Math.max(60, Math.min(95, accuracy + (Math.random() - 0.5) * 20));
+  // WPM calculation: (correct characters / 5) / minutes
+  const wpm = minutes > 0 ? (correctChars / 5) / minutes : 0;
+  const raw = minutes > 0 ? (totalChars / 5) / minutes : 0;
 
   return {
     wpm: Math.round(wpm * 100) / 100,
-    rawWpm: Math.round(rawWpm * 100) / 100,
+    raw: Math.round(raw * 100) / 100,
     accuracy: Math.round(accuracy * 100) / 100,
-    consistency: Math.round(consistency * 100) / 100,
-    durationSec: Math.round(durationSec * 100) / 100,
-    testMode: testState.mode
+    errors: totalErrors,
+    testDuration,
+    characters: {
+      correct: correctChars,
+      incorrect: incorrectChars,
+      extra: extraChars,
+      total: totalChars,
+    },
   };
-};
+}
 
 /**
  * Calculate character statistics

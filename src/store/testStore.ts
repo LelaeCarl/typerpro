@@ -40,7 +40,7 @@ export const useTestStore = create<TestSlice>((set, get) => ({
     target: generateWordTokens(200), // Initialize with words immediately
     cursor: { wordIndex: 0, letterIndex: 0 },
     keystrokes: [],
-    mode: 'words',
+    mode: 'time',
     id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     timeEngine: null,
   },
@@ -139,7 +139,7 @@ export const useTestStore = create<TestSlice>((set, get) => ({
           };
         }
         
-        // In words mode, end when all words are completed
+        // For other modes, just advance to next word
         const atLastWord = cursor.wordIndex >= target.length - 1;
         
         if (!atLastWord) {

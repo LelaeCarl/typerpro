@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Chip } from './Chip';
 import { useConfigStore } from '../store/configStore';
 import { useTestStore } from '../store/testStore';
@@ -6,21 +5,6 @@ import { useTestStore } from '../store/testStore';
 export function TopToolbar() {
   const { mode, setMode, durations, durationSec, setDuration } = useConfigStore();
   const { actions } = useTestStore();
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsMobile(isMobileDevice || isTouchDevice);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const onChangeMode = (m: any) => { 
     setMode(m); 
@@ -41,33 +25,59 @@ export function TopToolbar() {
   };
 
   return (
-    <div 
-      className="flex items-center gap-3 justify-center py-4 px-4 overflow-x-auto"
-      style={{
-        paddingTop: 'env(safe-area-inset-top, 1rem)',
-        paddingLeft: 'env(safe-area-inset-left, 1rem)',
-        paddingRight: 'env(safe-area-inset-right, 1rem)',
-      }}
-    >
-      <div className="flex items-center gap-2 md:gap-3 flex-wrap justify-center">
-        {(['words', 'time', 'quote', 'zen'] as const).map(m => (
+    <div className="flex justify-center py-4 px-4">
+      <div 
+        className="flex items-center gap-3 max-w-[960px] h-12 px-3 py-2 rounded-xl bg-panel border border-panel-border"
+        style={{
+          paddingTop: 'env(safe-area-inset-top, 0.5rem)',
+          paddingLeft: 'env(safe-area-inset-left, 0.75rem)',
+          paddingRight: 'env(safe-area-inset-right, 0.75rem)',
+        }}
+      >
+        {/* Mode chips */}
+        <div className="flex items-center gap-3">
           <Chip 
-            key={m} 
-            active={m === mode} 
-            onClick={() => onChangeMode(m)}
-            className={isMobile ? 'min-h-[44px] min-w-[60px] text-sm' : ''}
+            active={mode === 'time'} 
+            onClick={() => onChangeMode('time')}
+            className="h-8 px-3 text-sm font-medium"
           >
-            {m}
+            time
           </Chip>
-        ))}
+          <Chip 
+            active={mode === 'quote'} 
+            onClick={() => onChangeMode('quote')}
+            className="h-8 px-3 text-sm font-medium"
+          >
+            quote
+          </Chip>
+          <Chip 
+            active={mode === 'zen'} 
+            onClick={() => onChangeMode('zen')}
+            className="h-8 px-3 text-sm font-medium"
+          >
+            zen
+          </Chip>
+          <Chip 
+            active={mode === 'custom'} 
+            onClick={() => onChangeMode('custom')}
+            className="h-8 px-3 text-sm font-medium"
+          >
+            custom
+          </Chip>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-6 bg-white/8"></div>
+
+        {/* Duration chips - only show for time mode */}
         {mode === 'time' && (
-          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
             {durations.map(s => (
               <Chip 
                 key={s} 
                 active={s === durationSec} 
                 onClick={() => onChangeDur(s)}
-                className={isMobile ? 'min-h-[44px] min-w-[50px] text-sm' : ''}
+                className="h-8 px-3 text-sm font-medium"
               >
                 {s}
               </Chip>

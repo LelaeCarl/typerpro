@@ -3,14 +3,15 @@
 @tailwind utilities;
 
 :root {
-  /* Base (Serika-ish dark) */
+  /* Base (Serika-dark) */
   --tp-bg: #111318; /* page background */
   --tp-panel: #171a22; /* cards/panels/tooltip */
+  --tp-panel-border: rgba(31, 35, 45, 0.24); /* panel borders */
   --tp-text: #e6e6e6; /* primary text (correct) */
   --tp-text-2: #9aa1ab; /* secondary text (pending/labels) */
   
   /* Accent + semantic */
-  --tp-accent: #e0b315; /* yellow accent (chips/caret/WPM) */
+  --tp-accent: #e2b714; /* yellow accent (chips/caret/WPM) */
   --tp-error: #ff5252; /* wrong letters underline/red */
   --tp-error-extra: rgba(255, 82, 82, 0.30); /* faint red for extra */
   

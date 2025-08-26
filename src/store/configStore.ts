@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type Mode = 'words' | 'time' | 'quote' | 'zen';
+type Mode = 'time' | 'quote' | 'zen' | 'custom';
 
 interface ConfigSlice {
   mode: Mode;
@@ -11,7 +11,7 @@ interface ConfigSlice {
 }
 
 export const useConfigStore = create<ConfigSlice>((set) => ({
-  mode: 'words',
+  mode: 'time',
   durations: [15, 30, 60, 120],
   durationSec: 30,
   setMode: (m: Mode) => set({ mode: m }),
