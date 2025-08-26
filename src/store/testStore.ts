@@ -37,12 +37,13 @@ interface TestSlice {
 export const useTestStore = create<TestSlice>((set, get) => ({
   current: {
     status: 'idle',
-    target: generateWordTokens(200), // Initialize with words immediately
+    target: generateWordTokens(200),
     cursor: { wordIndex: 0, letterIndex: 0 },
     keystrokes: [],
     mode: 'time',
     id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     timeEngine: null,
+    remainingTime: 30, // Default to 30 seconds
   },
   actions: {
     startIfIdle() {
@@ -234,6 +235,14 @@ export const useTestStore = create<TestSlice>((set, get) => ({
           target: timeEngine.getWords(),
           timeEngine,
           remainingTime: durationSec,
+          status: 'idle',
+          cursor: { wordIndex: 0, letterIndex: 0 },
+          startedAt: undefined,
+          endedAt: undefined,
+          realStats: undefined,
+          displayStats: undefined,
+          keystrokes: [],
+          id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         }
       }));
     },

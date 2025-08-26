@@ -22,6 +22,12 @@ export function TestSurface() {
     );
   }
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="max-w-4xl w-full">
@@ -33,8 +39,8 @@ export function TestSurface() {
         {/* Timer for time mode */}
         {mode === 'time' && current.remainingTime !== undefined && (
           <div className="text-center mb-4">
-            <span className="text-accent text-lg">
-              {Math.floor(current.remainingTime / 60)}:{(current.remainingTime % 60).toString().padStart(2, '0')}
+            <span className="text-accent text-lg font-mono">
+              {formatTime(current.remainingTime)}
             </span>
           </div>
         )}
