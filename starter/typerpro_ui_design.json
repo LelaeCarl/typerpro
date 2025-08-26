@@ -1,0 +1,181 @@
+{
+  "theme": {
+    "name": "serika-dark-inspired",
+    "reference": "Derived from provided screenshots",
+    "screenshot_source": "/mnt/data/image.png"
+  },
+  "colors": {
+    "background/base": "#2c2e31",
+    "accent/yellow": "#5a5951",
+    "semantic/error": "#313437",
+    "text/primary": "#5a5951",
+    "text/secondary": "#424446",
+    "semantic/errorExtra": "rgba(49,52,55,0.3)",
+    "ui/caret": "#5a5951",
+    "surface/panel": "#323438"
+  },
+  "typography": {
+    "fontFamilies": {
+      "mono": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+      "sans": "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol'"
+    },
+    "scale": {
+      "xs": 12,
+      "sm": 14,
+      "md": 16,
+      "lg": 18,
+      "xl": 22,
+      "displaySm": 36,
+      "displayMd": 48,
+      "displayLg": 72
+    },
+    "lineHeights": {
+      "tight": 1.1,
+      "snug": 1.25,
+      "normal": 1.45,
+      "relaxed": 1.6
+    },
+    "letterSpacing": {
+      "tight": -0.01,
+      "normal": 0,
+      "wide": 0.02
+    }
+  },
+  "radii": {
+    "sm": 4,
+    "md": 8,
+    "lg": 12,
+    "xl": 16,
+    "pill": 999
+  },
+  "shadows": {
+    "panel": "0 8px 24px rgba(0,0,0,0.35)",
+    "tooltip": "0 2px 8px rgba(0,0,0,0.4)"
+  },
+  "spacing": {
+    "0": 0,
+    "0.5": 2,
+    "1": 4,
+    "1.5": 6,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 20,
+    "6": 24,
+    "8": 32,
+    "10": 40,
+    "12": 48,
+    "16": 64,
+    "20": 80,
+    "24": 96
+  },
+  "components": {
+    "navbar": {
+      "height": 56,
+      "bg": "{colors.background/base}",
+      "logo": {
+        "show": true,
+        "style": "mono wordmark",
+        "accent": "{colors.accent/yellow}"
+      },
+      "items": {
+        "gap": 16,
+        "color": "{colors.text/secondary}",
+        "hover": "{colors.text/primary}"
+      }
+    },
+    "topToolbar": {
+      "chipHeight": 28,
+      "chipRadius": "{radii.pill}",
+      "chipText": "{typography.scale.sm}",
+      "activeChipBg": "{colors.accent/yellow}",
+      "activeChipFg": "{colors.background/base}",
+      "inactiveChipBg": "rgba(255,255,255,0.06)",
+      "inactiveChipFg": "{colors.text/secondary}",
+      "gap": 12
+    },
+    "testSurface": {
+      "maxWidth": 980,
+      "linesVisible": 3,
+      "wordGap": 12,
+      "letterSpacing": 0,
+      "fontFamily": "{typography.fontFamilies.mono}",
+      "fontSize": 32,
+      "lineHeight": 1.35,
+      "colors": {
+        "pending": "rgba(255,255,255,0.6)",
+        "correct": "{colors.text/primary}",
+        "wrong": "{colors.semantic/error}",
+        "extra": "{colors.semantic/errorExtra}",
+        "caret": "{colors.ui/caret}"
+      },
+      "underlineWrong": true
+    },
+    "hudFooter": {
+      "keybindHint": true,
+      "hintTextColor": "{colors.text/secondary}",
+      "accent": "{colors.accent/yellow}"
+    },
+    "results": {
+      "layout": "left-metrics-right-graph",
+      "wpmDisplay": {
+        "fontSize": "{typography.scale.displayLg}",
+        "color": "{colors.accent/yellow}",
+        "labelColor": "{colors.text/secondary}"
+      },
+      "accDisplay": {
+        "fontSize": "{typography.scale.displayLg}",
+        "color": "{colors.accent/yellow}",
+        "labelColor": "{colors.text/secondary}"
+      },
+      "graph": {
+        "height": 360,
+        "wpmLine": "{colors.accent/yellow}",
+        "rawLine": "{colors.text/secondary}",
+        "errorMarks": "{colors.semantic/error}",
+        "grid": "rgba(255,255,255,0.08)",
+        "axes": "{colors.text/secondary}",
+        "tooltipBg": "{colors.surface/panel}",
+        "tooltipFg": "{colors.text/primary}"
+      },
+      "statsRow": {
+        "items": [
+          "raw",
+          "characters",
+          "consistency",
+          "time"
+        ],
+        "titleColor": "{colors.text/secondary}",
+        "valueColor": "{colors.text/primary}"
+      }
+    },
+    "commandPalette": {
+      "width": 720,
+      "bg": "{colors.surface/panel}",
+      "fg": "{colors.text/primary}",
+      "filterHint": "{colors.text/secondary}",
+      "shortcut": "Esc or Ctrl/Cmd+Shift+P"
+    },
+    "notifications": {
+      "toastBg": "{colors.surface/panel}",
+      "toastFg": "{colors.text/primary}",
+      "success": "#2ecc71",
+      "warning": "#f1c40f",
+      "error": "{colors.semantic/error}"
+    }
+  },
+  "interaction": {
+    "keybinds": {
+      "restart": [
+        "Tab+Enter",
+        "Tab",
+        "Esc"
+      ],
+      "openCommandPalette": [
+        "Esc",
+        "Ctrl+Shift+P",
+        "Cmd+Shift+P"
+      ]
+    }
+  }
+}
