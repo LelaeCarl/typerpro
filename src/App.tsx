@@ -9,7 +9,7 @@ import CommandPalette from './components/CommandPalette';
 import KeyboardHandler from './components/KeyboardHandler';
 
 function App() {
-  const { toggleCommandPalette, closeCommandPalette, commandPaletteOpen } = useAppStore();
+  const { closeCommandPalette, commandPaletteOpen } = useAppStore();
   const { actions } = useTestStore();
 
   // Start a default test on app load

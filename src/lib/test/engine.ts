@@ -1,4 +1,4 @@
-import type { WordToken, TestMode } from '../../types';
+import type { WordToken } from '../../types';
 import { generateWordTokens } from './words';
 
 const BASE_WPM = 220;
@@ -7,7 +7,7 @@ export interface TimeModeState {
   deadline: number;
   remainingTime: number;
   isRunning: boolean;
-  tickInterval?: number;
+  tickInterval?: NodeJS.Timeout;
 }
 
 export interface WordBuffer {

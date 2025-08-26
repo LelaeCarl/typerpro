@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { LetterState, WordToken, TestMode, TestState } from '../types';
+import type { WordToken, TestMode, TestState } from '../types';
 import { generateWordTokens } from '../lib/test/words';
 import { calcRealStats } from '../lib/test/stats';
 import { toDisplayStats } from '../lib/vibe/interceptor';
@@ -21,7 +21,7 @@ interface TestSlice {
     mode: TestMode;
     id: string;
     remainingTime?: number;
-    timeEngine: TimeModeEngine | null;
+    timeEngine?: TimeModeEngine | null;
   };
   actions: {
     startIfIdle(): void;
@@ -126,7 +126,7 @@ export const useTestStore = create<TestSlice>((set, get) => ({
 
     commitSpace() {
       set(state => {
-        const { target, cursor, mode, timeEngine } = state.current;
+        const { target, cursor, mode } = state.current;
         
         // In time mode, don't end on word completion
         if (mode === 'time') {
@@ -268,15 +268,9 @@ export const useTestStore = create<TestSlice>((set, get) => ({
           const timeEngine = new TimeModeEngine(configStore.durationSec);
           newState.current = {
             ...newState.current,
-            timeEngine: timeEngine,
+            timeEngine: timeEngine as any,
             target: timeEngine.getWords(),
-            remainingTime: configStore.durationSec,
-          };
-        } else {
-          newState.current = {
-            ...newState.current,
-            timeEngine: null,
-            remainingTime: undefined,
+            remainingTime: configStore.durationSec as any,
           };
         }
 

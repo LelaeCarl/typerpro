@@ -40,7 +40,7 @@ const ResultsGraph = ({ displayStats }: ResultsGraphProps) => {
             dataKey="time" 
             stroke="var(--tp-text-2)" 
             fontSize={12} 
-            tickFormatter={(value) => Math.round(value)}
+            tickFormatter={(value) => Math.round(value).toString()}
           />
           <YAxis 
             stroke="var(--tp-text-2)" 

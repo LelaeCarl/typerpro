@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface LetterProps {
   ch: string;
   state: 'pending' | 'correct' | 'wrong' | 'extra';

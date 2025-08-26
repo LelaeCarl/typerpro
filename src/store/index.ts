@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import type { TestState, TestMode, Settings, DisplayStats } from '../types';
+import type { TestState, TestMode, Settings } from '../types';
 import { generateWordTokens } from '../lib/test/words';
 import { calcRealStats } from '../lib/test/stats';
 import { toDisplayStats } from '../lib/vibe/interceptor';

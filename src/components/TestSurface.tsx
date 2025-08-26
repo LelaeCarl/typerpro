@@ -82,7 +82,7 @@ export function TestSurface() {
     }
 
     // Don't process during IME composition
-    if (e.isComposing) return;
+    if ((e.nativeEvent as any).isComposing) return;
   };
 
   const onBeforeInput: React.FormEventHandler<HTMLInputElement> = (e) => {

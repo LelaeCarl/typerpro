@@ -1,4 +1,4 @@
-import type { TestState, RealStats, Keystroke } from '../../types';
+import type { TestState, RealStats } from '../../types';
 
 /**
  * Calculate real statistics from test data
