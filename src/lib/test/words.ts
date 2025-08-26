@@ -16,9 +16,10 @@ const DEFAULT_WORDS = [
 export const generateWords = (count: number = 200): string[] => {
   const words: string[] = [];
   
+  // Use a deterministic sequence instead of random
   for (let i = 0; i < count; i++) {
-    const randomIndex = Math.floor(Math.random() * DEFAULT_WORDS.length);
-    words.push(DEFAULT_WORDS[randomIndex]);
+    const index = i % DEFAULT_WORDS.length;
+    words.push(DEFAULT_WORDS[index]);
   }
   
   return words;
