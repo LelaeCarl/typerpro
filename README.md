@@ -1,6 +1,6 @@
 # TyperPro - Vibe Mode (Arcade) 🎯
 
-A Monkeytype-style typing application with **vibe-coded metrics** - where the displayed statistics are consistently fake yet engaging, creating an arcade-like experience.
+A Monkeytype-style typing application with metrics where the displayed statistics are consistently fake yet engaging, creating an arcade-like experience.
 
 **🌐 Live Demo**: [https://lelaecarl.github.io/typerpro/](https://lelaecarl.github.io/typerpro/)
 

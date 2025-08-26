@@ -1,1 +1,0 @@
-# TyperPro - Force deployment trigger
