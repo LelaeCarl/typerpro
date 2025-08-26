@@ -1,20 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html','./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        'background-base': '#2c2e31',
-        'accent-yellow': '#5a5951',
-        'semantic-error': '#313437',
-        'text-primary': '#5a5951',
-        'text-secondary': '#424446',
-        'semantic-errorExtra': 'rgba(49,52,55,0.3)',
-        'ui-caret': '#5a5951',
-        'surface-panel': '#323438',
+        bg: 'var(--tp-bg)',
+        panel: 'var(--tp-panel)',
+        text: 'var(--tp-text)',
+        text2: 'var(--tp-text-2)',
+        accent: 'var(--tp-accent)',
+        error: 'var(--tp-error)',
+        errorExtra: 'var(--tp-error-extra)',
+        graph: {
+          wpm: 'var(--tp-graph-wpm)',
+          raw: 'var(--tp-graph-raw)',
+          grid: 'var(--tp-graph-grid)'
+        }
       },
       fontFamily: {
         'mono': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
@@ -56,6 +57,10 @@ export default {
         '0.5': '2px',
         '1.5': '6px',
       },
+      transitionDuration: {
+        '120': '120ms',
+        '110': '110ms',
+      }
     },
   },
   plugins: [],

@@ -1,70 +1,80 @@
-import { useAppStore } from '../store';
-import type { TestMode } from '../types';
+import { useState, useEffect } from 'react';
+import { Chip } from './Chip';
+import { useConfigStore } from '../store/configStore';
+import { useTestStore } from '../store/testStore';
 
-const TopToolbar = () => {
-  const { currentTest, startNewTest } = useAppStore();
+export function TopToolbar() {
+  const { mode, setMode, durations, durationSec, setDuration } = useConfigStore();
+  const { actions } = useTestStore();
+  const [isMobile, setIsMobile] = useState(false);
 
-  const modes: { mode: TestMode; label: string }[] = [
-    { mode: 'words', label: 'words' },
-    { mode: 'time', label: 'time' },
-    { mode: 'quote', label: 'quote' },
-    { mode: 'zen', label: 'zen' },
-  ];
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsMobile(isMobileDevice || isTouchDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  const timeOptions = [15, 30, 60, 120];
-
-  const handleModeChange = (mode: TestMode) => {
-    startNewTest(mode);
+  const onChangeMode = (m: any) => { 
+    setMode(m); 
+    if (m === 'time') {
+      actions.initTimeMode(durationSec);
+    } else {
+      actions.resetAndRebuild();
+    }
   };
-
-  const handleTimeChange = (seconds: number) => {
-    startNewTest('time', seconds);
+  
+  const onChangeDur = (s: number) => { 
+    setDuration(s); 
+    if (mode === 'time') {
+      actions.initTimeMode(s);
+    } else {
+      actions.resetAndRebuild();
+    }
   };
 
   return (
-    <div className="flex items-center justify-center space-x-3 py-4">
-      {/* Mode chips */}
-      {modes.map(({ mode, label }) => (
-        <button
-          key={mode}
-          onClick={() => handleModeChange(mode)}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            currentTest?.mode === mode
-              ? 'bg-accent-yellow text-background-base'
-              : 'bg-white/6 text-text-secondary hover:text-text-primary'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-
-      {/* Time options (only show for time mode) */}
-      {currentTest?.mode === 'time' && (
-        <div className="flex items-center space-x-2 ml-4">
-          {timeOptions.map((seconds) => (
-            <button
-              key={seconds}
-              onClick={() => handleTimeChange(seconds)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                currentTest?.mode === 'time'
-                  ? 'bg-accent-yellow text-background-base'
-                  : 'bg-white/6 text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              {seconds}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Settings button */}
-      <button className="ml-4 p-1 text-text-secondary hover:text-text-primary transition-colors">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+    <div 
+      className="flex items-center gap-3 justify-center py-4 px-4 overflow-x-auto"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 1rem)',
+        paddingLeft: 'env(safe-area-inset-left, 1rem)',
+        paddingRight: 'env(safe-area-inset-right, 1rem)',
+      }}
+    >
+      <div className="flex items-center gap-2 md:gap-3 flex-wrap justify-center">
+        {(['words', 'time', 'quote', 'zen'] as const).map(m => (
+          <Chip 
+            key={m} 
+            active={m === mode} 
+            onClick={() => onChangeMode(m)}
+            className={isMobile ? 'min-h-[44px] min-w-[60px] text-sm' : ''}
+          >
+            {m}
+          </Chip>
+        ))}
+        {mode === 'time' && (
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+            {durations.map(s => (
+              <Chip 
+                key={s} 
+                active={s === durationSec} 
+                onClick={() => onChangeDur(s)}
+                className={isMobile ? 'min-h-[44px] min-w-[50px] text-sm' : ''}
+              >
+                {s}
+              </Chip>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default TopToolbar;
+}

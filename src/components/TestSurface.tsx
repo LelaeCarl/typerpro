@@ -1,109 +1,248 @@
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useTestStore } from '../store/testStore';
 import { useAppStore } from '../store';
-import type { LetterState } from '../types';
-import clsx from 'clsx';
+import { Letter } from './Letter';
 
-const TestSurface = () => {
-  const { currentTest, settings } = useAppStore();
+export function TestSurface() {
+  const { target, cursor, status, mode, remainingTime, startIfIdle, typeChar, commitSpace, backspace } = useTestStore(s => ({ 
+    target: s.current.target, 
+    cursor: s.current.cursor, 
+    status: s.current.status,
+    mode: s.current.mode,
+    remainingTime: s.current.remainingTime,
+    startIfIdle: s.actions.startIfIdle, 
+    typeChar: s.actions.typeChar, 
+    commitSpace: s.actions.commitSpace, 
+    backspace: s.actions.backspace 
+  }));
+  const { commandPaletteOpen } = useAppStore();
+  
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-  if (!currentTest) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-text-secondary">Loading test...</div>
-      </div>
-    );
-  }
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsMobile(isMobileDevice || isTouchDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  const { target, cursor, status } = currentTest;
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [status]);
 
-  const getLetterClass = (letter: string, state: LetterState, isCurrent: boolean) => {
-    return clsx(
-      'transition-colors duration-75',
-      {
-        'text-white/60': state === 'pending',
-        'text-text-primary': state === 'correct',
-        'text-semantic-error underline decoration-semantic-error': state === 'wrong',
-        'text-semantic-errorExtra': state === 'extra',
-        'bg-ui-caret text-background-base': isCurrent && settings.caretStyle === 'block',
-        'border-l-2 border-ui-caret': isCurrent && settings.caretStyle === 'line',
-        'underline decoration-ui-caret': isCurrent && settings.caretStyle === 'underline',
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    const handleBlur = () => {
+      // Only refocus if command palette isn't open
+      if (!commandPaletteOpen) {
+        setTimeout(() => input.focus(), 0);
       }
-    );
+    };
+
+    input.addEventListener('blur', handleBlur);
+    return () => input.removeEventListener('blur', handleBlur);
+  }, [commandPaletteOpen]);
+
+  const handleTestAreaClick = () => {
+    inputRef.current?.focus();
   };
 
-  const renderWord = (word: typeof target[0], wordIndex: number) => {
-    const isCurrentWord = wordIndex === cursor.wordIndex;
+  const onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
+    // Handle special keys on mobile
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      startIfIdle();
+      backspace();
+      return;
+    }
     
-    return (
-      <span key={wordIndex} className="inline-block mr-3">
-        {word.target.split('').map((letter, letterIndex) => {
-          const isCurrentLetter = isCurrentWord && letterIndex === cursor.letterIndex;
-          const state = word.letters[letterIndex] || 'pending';
-          
-          return (
-            <span
-              key={letterIndex}
-              className={getLetterClass(letter, state, isCurrentLetter)}
-            >
-              {letter}
-            </span>
-          );
-        })}
-        
-        {/* Render extra characters */}
-        {word.typed.length > word.target.length && 
-          word.typed.slice(word.target.length).split('').map((char, index) => (
-            <span
-              key={`extra-${index}`}
-              className="text-semantic-errorExtra"
-            >
-              {char}
-            </span>
-          ))
-        }
-        
-        {/* Space after word */}
-        <span className="text-white/60">&nbsp;</span>
-      </span>
-    );
+    if (e.key === ' ') {
+      e.preventDefault();
+      startIfIdle();
+      commitSpace();
+      return;
+    }
+    
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      startIfIdle();
+      commitSpace();
+      return;
+    }
+
+    // Don't process during IME composition
+    if (e.isComposing) return;
+  };
+
+  const onBeforeInput: React.FormEventHandler<HTMLInputElement> = (e) => {
+    const input = e.currentTarget;
+    const data = (e as any).data;
+    
+    if (!data) return;
+    
+    e.preventDefault();
+    startIfIdle();
+    
+    // Handle each character
+    for (const char of data) {
+      if (char === ' ') {
+        commitSpace();
+      } else if (char.length === 1) {
+        typeChar(char);
+      }
+    }
+    
+    // Clear input value to prevent accumulation
+    setTimeout(() => {
+      input.value = '';
+    }, 0);
+  };
+
+  const onInput: React.FormEventHandler<HTMLInputElement> = (e) => {
+    // Fallback for browsers that don't support beforeinput
+    const input = e.currentTarget;
+    const value = input.value;
+    
+    if (!value) return;
+    
+    e.preventDefault();
+    startIfIdle();
+    
+    // Handle each character
+    for (const char of value) {
+      if (char === ' ') {
+        commitSpace();
+      } else if (char.length === 1) {
+        typeChar(char);
+      }
+    }
+    
+    // Clear input value
+    input.value = '';
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Language indicator */}
-      <div className="flex items-center justify-center mb-8">
-        <svg className="w-4 h-4 mr-2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span className="text-text-secondary text-sm">english</span>
-      </div>
-
-      {/* Test surface */}
+    <div className="relative min-h-[100svh] flex flex-col justify-center">
+      {/* Mobile input field - tiny but visible to summon keyboard */}
+      <input 
+        ref={inputRef} 
+        className={`absolute top-0 left-0 w-[1px] h-[1px] opacity-0 pointer-events-none ${
+          isMobile ? 'w-[1px] h-[1px] opacity-0' : 'w-0 h-0'
+        }`}
+        autoFocus 
+        autoCapitalize="off"
+        autoCorrect="off"
+        autoComplete="off"
+        spellCheck={false}
+        inputMode="text"
+        onKeyDown={onKeyDown}
+        onBeforeInput={onBeforeInput}
+        onInput={onInput}
+        onChange={() => { /* noop: we handle input via beforeinput/input */ }}
+      />
+      
       <div 
-        data-testid="test-surface"
-        className={clsx(
-          'font-mono text-center leading-relaxed select-none',
-          'max-w-4xl mx-auto px-4'
-        )}
-        style={{
-          fontSize: `${settings.fontSize}px`,
-          lineHeight: '1.35',
+        aria-hidden 
+        className="select-none px-4 py-8"
+        onClick={handleTestAreaClick}
+        style={{ 
+          paddingTop: 'env(safe-area-inset-top, 1rem)',
+          paddingBottom: 'env(safe-area-inset-bottom, 1rem)',
+          paddingLeft: 'env(safe-area-inset-left, 1rem)',
+          paddingRight: 'env(safe-area-inset-right, 1rem)',
         }}
       >
-        {target.map((word, index) => renderWord(word, index))}
-      </div>
+        {/* Language indicator */}
+        <div className="text-center text-text2 text-sm mb-4">
+          <span>english</span>
+        </div>
 
-      {/* Restart button */}
-      {status === 'idle' && (
-        <div className="flex justify-center mt-8">
-          <button className="p-2 text-text-secondary hover:text-text-primary transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+        {/* Time display for time mode */}
+        {mode === 'time' && remainingTime !== undefined && (
+          <div className="text-center text-accent text-lg font-mono mb-4">
+            {formatTime(remainingTime)}
+          </div>
+        )}
+
+        {/* Test surface */}
+        <div 
+          data-testid="test-surface" 
+          className="font-mono text-center leading-relaxed max-w-4xl mx-auto" 
+          style={{ 
+            fontSize: isMobile ? '24px' : '32px', 
+            lineHeight: '1.35',
+            minHeight: isMobile ? '60vh' : 'auto'
+          }}
+        >
+          {target.map((word, index) => {
+            const isCurrentWord = index === cursor.wordIndex;
+            return (
+              <motion.span 
+                key={index} 
+                className="inline-block mr-3"
+                layout
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.12, ease: 'easeOut' }}
+              >
+                {word.target.split('').map((letter, letterIndex) => {
+                  const isCurrentLetter = isCurrentWord && letterIndex === cursor.letterIndex;
+                  const state = word.letters[letterIndex] || 'pending';
+                  return (
+                    <span key={letterIndex} className="relative">
+                      <Letter ch={letter} state={state} />
+                      {isCurrentLetter && (
+                        <motion.span 
+                          className="absolute inset-0 bg-accent opacity-30"
+                          animate={{ opacity: [0.3, 0.6, 0.3] }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                      )}
+                    </span>
+                  );
+                })}
+                {/* Extra characters */}
+                {word.typed.length > word.target.length && 
+                  word.typed.slice(word.target.length).split('').map((char, index) => (
+                    <Letter key={`extra-${index}`} ch={char} state="extra" />
+                  ))
+                }
+                <span className="text-text2">&nbsp;</span>
+              </motion.span>
+            );
+          })}
+        </div>
+
+        {/* Restart button */}
+        <div className="text-center mt-8">
+          <button 
+            onClick={() => {
+              // This will be handled by the global keyboard handler
+            }}
+            className="text-text2 hover:text-text transition-colors text-sm min-h-[44px] px-4 py-2"
+          >
+            tab + enter - restart
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
-};
-
-export default TestSurface;
+}

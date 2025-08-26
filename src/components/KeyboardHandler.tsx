@@ -1,9 +1,12 @@
 import { useEffect, useRef } from 'react';
+import { useTestStore } from '../store/testStore';
 import { useAppStore } from '../store';
 
 const KeyboardHandler = () => {
-  const { processKeystroke, toggleCommandPalette, restartTest, finishTest } = useAppStore();
+  const { actions } = useTestStore();
+  const { toggleCommandPalette } = useAppStore();
   const isComposing = useRef(false);
+  const lastKeyWasTab = useRef(false);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -12,44 +15,35 @@ const KeyboardHandler = () => {
         return;
       }
 
-      // Prevent default for most keys to avoid browser shortcuts
-      if (!event.ctrlKey && !event.metaKey) {
-        event.preventDefault();
-      }
-
-      const { key, code, timestamp } = event;
-
-      // Handle special keybinds
-      if (event.ctrlKey || event.metaKey) {
-        if (event.shiftKey && (key === 'p' || key === 'P')) {
-          event.preventDefault();
-          toggleCommandPalette();
-          return;
-        }
-      }
-
       // Handle restart keybinds
-      if (key === 'Tab' && event.shiftKey) {
+      if (event.key === 'Tab') {
         event.preventDefault();
-        restartTest();
+        lastKeyWasTab.current = true;
+        actions.resetAndRebuild();
         return;
       }
 
-      if (key === 'Escape') {
+      if ((event.key === 'Enter' && event.getModifierState('Tab')) || 
+          (event.key === 'Enter' && lastKeyWasTab.current)) {
+        event.preventDefault();
+        lastKeyWasTab.current = false;
+        actions.resetAndRebuild();
+        return;
+      }
+
+      // Handle command palette keybinds
+      if ((event.key === 'Escape') || 
+          (event.ctrlKey && event.shiftKey && (event.key === 'P' || event.key === 'p')) ||
+          (event.metaKey && event.shiftKey && (event.key === 'P' || event.key === 'p'))) {
         event.preventDefault();
         toggleCommandPalette();
         return;
       }
 
-      // Handle test completion
-      if (key === 'Enter' && event.ctrlKey) {
-        event.preventDefault();
-        finishTest();
-        return;
+      // Reset tab state for other keys
+      if (event.key !== 'Tab') {
+        lastKeyWasTab.current = false;
       }
-
-      // Process regular keystrokes
-      processKeystroke(key, code, timestamp);
     };
 
     const handleCompositionStart = () => {
@@ -66,19 +60,19 @@ const KeyboardHandler = () => {
     };
 
     // Add event listeners
-    document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
     document.addEventListener('compositionstart', handleCompositionStart);
     document.addEventListener('compositionend', handleCompositionEnd);
     document.addEventListener('paste', handlePaste);
 
     // Cleanup
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
       document.removeEventListener('compositionstart', handleCompositionStart);
       document.removeEventListener('compositionend', handleCompositionEnd);
       document.removeEventListener('paste', handlePaste);
     };
-  }, [processKeystroke, toggleCommandPalette, restartTest, finishTest]);
+  }, [actions, toggleCommandPalette]);
 
   return null; // This component doesn't render anything
 };

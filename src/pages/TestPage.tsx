@@ -1,29 +1,29 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../store';
-import TopToolbar from '../components/TopToolbar';
-import TestSurface from '../components/TestSurface';
+import { useTestStore } from '../store/testStore';
+import { TopToolbar } from '../components/TopToolbar';
+import { TestSurface } from '../components/TestSurface';
 import HudFooter from '../components/HudFooter';
 
 const TestPage = () => {
-  const { currentTest } = useAppStore();
+  const { status, displayStats } = useTestStore(s => ({ 
+    status: s.current.status, 
+    displayStats: s.current.displayStats 
+  }));
   const navigate = useNavigate();
 
-  // Navigate to results when test is completed
   useEffect(() => {
-    if (currentTest?.status === 'done') {
+    if (status === 'done' && displayStats) {
       navigate('/results');
     }
-  }, [currentTest?.status, navigate]);
+  }, [status, displayStats, navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-[100svh] flex flex-col">
       <TopToolbar />
-      
-      <div className="flex-1 flex items-center justify-center pb-20">
+      <div className="flex-1 flex flex-col">
         <TestSurface />
       </div>
-      
       <HudFooter />
     </div>
   );

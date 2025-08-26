@@ -3,15 +3,21 @@
 @tailwind utilities;
 
 :root {
-  /* Design tokens from typerpro_ui_design.json */
-  --color-background-base: #2c2e31;
-  --color-accent-yellow: #5a5951;
-  --color-semantic-error: #313437;
-  --color-text-primary: #5a5951;
-  --color-text-secondary: #424446;
-  --color-semantic-errorExtra: rgba(49,52,55,0.3);
-  --color-ui-caret: #5a5951;
-  --color-surface-panel: #323438;
+  /* Base (Serika-ish dark) */
+  --tp-bg: #111318; /* page background */
+  --tp-panel: #171a22; /* cards/panels/tooltip */
+  --tp-text: #e6e6e6; /* primary text (correct) */
+  --tp-text-2: #9aa1ab; /* secondary text (pending/labels) */
+  
+  /* Accent + semantic */
+  --tp-accent: #e0b315; /* yellow accent (chips/caret/WPM) */
+  --tp-error: #ff5252; /* wrong letters underline/red */
+  --tp-error-extra: rgba(255, 82, 82, 0.30); /* faint red for extra */
+  
+  /* Graph lines */
+  --tp-graph-wpm: var(--tp-accent);
+  --tp-graph-raw: #6e7683;
+  --tp-graph-grid: rgba(255,255,255,0.08);
   
   /* Typography */
   --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
@@ -50,18 +56,45 @@
   box-sizing: border-box;
 }
 
-html {
-  font-family: var(--font-family-sans);
-  background-color: var(--color-background-base);
-  color: var(--color-text-primary);
+html, body, #root {
+  background: var(--tp-bg);
+  color: var(--tp-text);
 }
 
 body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: var(--color-background-base);
-  color: var(--color-text-primary);
+  /* Prevent zoom on input focus on iOS */
+  -webkit-text-size-adjust: 100%;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior: none;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  body {
+    /* Prevent zoom on input focus */
+    font-size: 16px;
+  }
+  
+  /* Ensure proper touch targets */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent text selection on interactive elements */
+  button, a {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
 }
 
 /* Custom scrollbar */
@@ -70,22 +103,34 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-background-base);
+  background: var(--tp-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-text-secondary);
+  background: var(--tp-text-2);
   border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-primary);
+  background: var(--tp-text);
 }
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid var(--color-accent-yellow);
+  outline: 2px solid var(--tp-accent);
   outline-offset: 2px;
+}
+
+/* Touch-friendly focus styles for mobile */
+@media (hover: none) and (pointer: coarse) {
+  *:focus-visible {
+    outline: none;
+  }
+  
+  button:active,
+  a:active {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 /* Reduced motion */
@@ -96,5 +141,24 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Safe area support for modern browsers */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(env(safe-area-inset-top), 1rem);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+  
+  .safe-area-left {
+    padding-left: max(env(safe-area-inset-left), 1rem);
+  }
+  
+  .safe-area-right {
+    padding-right: max(env(safe-area-inset-right), 1rem);
   }
 }
